@@ -1,10 +1,10 @@
 {
-	"id": "random-note-plus-plus",
-	"name": "Random note++",
+	"id": "random-folder-note",
+	"name": "Random Folder Note",
 	"version": "0.1.4",
 	"minAppVersion": "0.12.12",
-	"description": "Like the built-in Random note, but also has a command to select a random file in a configured folder or current folder",
-	"author": "Alex Komoroske",
-	"authorUrl": "https://github.com/jkomoros",
+	"description": "Like the built-in Random note, but gets notes out of a specific folder",
+	"author": "Alex Komoroske / Eli Finer",
+	"authorUrl": "https://github.com/elifiner",
 	"isDesktopOnly": false
 }

@@ -1,13 +1,11 @@
 const obsidian = require('obsidian');
 
+const FOLDERS = 3;
 const DEFAULT_SETTINGS = {
-	folder: ''
+	folders: ['', '', '']
 }
 
 const MAIN_COMMAND_NAME = 'Open random note';
-const CONFIGURED_FOLDER_COMMAND_NAME = MAIN_COMMAND_NAME + ' in configured folder';
-const CURRENT_FOLDER_COMMAND_NAME = MAIN_COMMAND_NAME + ' in current folder';
-const RIBBON_COMMAND_STRING = MAIN_COMMAND_NAME + ' (⇧ to restrict to current folder, or ⎇ to restrict to configured folder)';
 
 class RandomInFolderPlugin extends obsidian.Plugin {
 
@@ -15,86 +13,30 @@ class RandomInFolderPlugin extends obsidian.Plugin {
 
 		await this.loadSettings();
 
-		this.addRibbonIcon('dice', RIBBON_COMMAND_STRING, (evt) => {
-			if (evt.shiftKey) {
-				this.currentFolderAction();
-			} else if(evt.altKey) {
-				this.configuredFolderAction();
-			} else {
-				this.mainAction();
+		for (let i = 0; i < FOLDERS; i++) {
+			if (this.settings.folders[i]) {
+				this.addRibbonIcon(`dice-${i+3}`, MAIN_COMMAND_NAME + ` (in ${this.settings.folders[i]})`, (evt) => {
+					this.configuredFolderAction(this.settings.folders[i]);
+				});
 			}
-		});
+		}
 
 		this.addSettingTab(new RandomInFolderSettingsTab(this.app, this));
 
-		this.addCommand({
-			id: 'random-note-in-configured-folder',
-			name: CONFIGURED_FOLDER_COMMAND_NAME,
-			callback: () => this.configuredFolderAction(),
-			hotkeys: [
-				{
-					modifiers:['Mod', 'Alt'],
-					key: 'r',
-				}
-			]
-		});
-
-		this.addCommand({
-			id: 'random-note',
-			name: MAIN_COMMAND_NAME,
-			callback: () => this.mainAction(),
-			hotkeys: [
-				{
-					modifiers:['Mod'],
-					key: 'r',
-				}
-			]
-		})
-
-		this.addCommand({
-			id: 'random-note-in-current-folder',
-			name: CURRENT_FOLDER_COMMAND_NAME,
-			checkCallback: (checking) => {
-				if (checking) {
-					if (this.folderOfActiveLeaf()) return true;
-					return false;
-				}
-				this.currentFolderAction();
-				return true;
-			},
-			hotkeys: [
-				{
-					modifiers:['Mod', 'Shift'],
-					key: 'r',
-				}
-			]
-		});
-	}
-
-	mainAction() {
-		const folder = this.app.vault.getAbstractFileByPath('/');
-		this.navigateToRandomNoteInFolder(folder);
-	}
-
-	configuredFolderAction() {
-		const folder = this.app.vault.getAbstractFileByPath(this.settings.folder || '/');
-		this.navigateToRandomNoteInFolder(folder);
-	}
-
-	currentFolderAction() {
-		const folder = this.folderOfActiveLeaf();
-		this.navigateToRandomNoteInFolder(folder);
-	}
-
-	folderOfActiveLeaf() {
-		if (!this.app.workspace.activeLeaf) {
-			return null;
+		for (let i = 0; i < FOLDERS; i++) {
+			if (this.settings.folders[i]) {
+				this.addCommand({
+					id: `random-note-in-configured-folder-${i+1}`,
+					name: MAIN_COMMAND_NAME + ` (in ${this.settings.folders[i]})`,
+					callback: () => this.configuredFolderAction(this.settings.folders[i]),
+				});
+			}
 		}
-		const activeLeaf = this.app.workspace.activeLeaf;
-		if (!activeLeaf.view.file) {
-			return null;
-		}
-		return activeLeaf.view.file.parent;
+	}
+
+	configuredFolderAction(folderName) {
+		const folder = this.app.vault.getAbstractFileByPath(folderName || '/');
+		this.navigateToRandomNoteInFolder(folder);
 	}
 
 	navigateToRandomNoteInFolder(folder) {
@@ -110,6 +52,14 @@ class RandomInFolderPlugin extends obsidian.Plugin {
 		this.app.workspace.activeLeaf.openFile(randomChild);
 	}
 
+	randomFileInFolder(folder) {
+		const fileChildren = this.descendantFilesInFolder(folder);
+		if (fileChildren.length == 0) {
+			return null;
+		}
+		return fileChildren[Math.floor(Math.random()*fileChildren.length)]
+	}
+
 	descendantFilesInFolder(folder) {
 		const files = [];
 		for (const item of folder.children) {
@@ -121,14 +71,6 @@ class RandomInFolderPlugin extends obsidian.Plugin {
 			}
 		}
 		return files;
-	}
-
-	randomFileInFolder(folder) {
-		const fileChildren = this.descendantFilesInFolder(folder);
-		if (fileChildren.length == 0) {
-			return null;
-		}
-		return fileChildren[Math.floor(Math.random()*fileChildren.length)]
 	}
 
 	async loadSettings() {
@@ -151,16 +93,19 @@ class RandomInFolderSettingsTab extends obsidian.PluginSettingTab {
 
 		containerEl.empty();
 
-		new obsidian.Setting(containerEl)
-			.setName('Configured folder')
-			.setDesc('The folder to use for the \'' + CONFIGURED_FOLDER_COMMAND_NAME +'\' option')
-			.addText(text => text
-				.setValue(this.plugin.settings.folder)
-				.setPlaceholder('Example: foldername')
-				.onChange(async (value) => {
-					this.plugin.settings.folder = value;
-					await this.plugin.saveSettings();
-				}));
+		for (let i = 0; i < FOLDERS; i++) {
+			new obsidian.Setting(containerEl)
+				.setName(`Configured folder ${i + 1}`)
+				.setDesc(`The folder to use for random note command ${i + 1}`)
+				.addText(text => text
+					.setValue(this.plugin.settings.folders[i])
+					.setPlaceholder('Example: foldername')
+					.onChange(async (value) => {
+						this.plugin.settings.folders[i] = value;
+						await this.plugin.saveSettings();
+					}));
+		}
+
 	}
 }
 
