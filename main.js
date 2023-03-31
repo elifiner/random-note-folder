@@ -5,7 +5,7 @@ const DEFAULT_SETTINGS = {
 	folders: ['', '', '']
 }
 
-const MAIN_COMMAND_NAME = 'Open random note';
+const MAIN_COMMAND_NAME = 'Open random';
 
 class RandomInFolderPlugin extends obsidian.Plugin {
 
@@ -15,7 +15,7 @@ class RandomInFolderPlugin extends obsidian.Plugin {
 
 		for (let i = 0; i < FOLDERS; i++) {
 			if (this.settings.folders[i]) {
-				this.addRibbonIcon(`dice-${i+3}`, MAIN_COMMAND_NAME + ` (in ${this.settings.folders[i]})`, (evt) => {
+				this.addRibbonIcon(`dice-${i+3}`, MAIN_COMMAND_NAME + ` in ${this.settings.folders[i]}`, (evt) => {
 					this.configuredFolderAction(this.settings.folders[i]);
 				});
 			}
@@ -27,7 +27,7 @@ class RandomInFolderPlugin extends obsidian.Plugin {
 			if (this.settings.folders[i]) {
 				this.addCommand({
 					id: `random-note-in-configured-folder-${i+1}`,
-					name: MAIN_COMMAND_NAME + ` (in ${this.settings.folders[i]})`,
+					name: MAIN_COMMAND_NAME + ` in ${this.settings.folders[i]}`,
 					callback: () => this.configuredFolderAction(this.settings.folders[i]),
 				});
 			}
